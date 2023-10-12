@@ -1,0 +1,70 @@
+---
+title: "Early Phases of the COVID-19 Pandemic"
+author: "N. Nicol"
+date: "2023-10-11"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+This report was produced from a John Hopkins COVID-19 Dataset and accessed via GitHub. It contains a list of countries/regions and their reported confirmed COVID-19 case numbers each day through the majority of the pandemic. 
+
+The dataset from which this graphic was sourced can be found here: https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv
+*note: code for data manipulation can be found in the appendix
+
+
+```{r Young_graph, include=FALSE}
+
+# Load the necessary libraries
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+# Read the data
+covid_data <- read.csv("https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
+
+# Convert the date columns from character to Date
+covid_data <- covid_data %>%
+  mutate(across(starts_with("1/22/20"):("3/1/20"), as.Date, format = "%m/%d/%y"))
+
+# Group the data by Country/Region and calculate the total cases on March 1, 2020
+march_1_cases <- covid_data %>%
+  group_by(Country.Region) %>%
+  summarize(total_cases = sum(`3/1/20`, na.rm = TRUE)) %>%
+  arrange(desc(total_cases)) %>%
+  top_n(10)
+
+# Filter the original data to keep only the rows corresponding to the top 10 countries
+top_10_data <- covid_data %>%
+  filter(Country.Region %in% march_1_cases$Country.Region)
+
+# Reshape the data from wide to long format
+top_10_data_long <- top_10_data %>%
+  pivot_longer(cols = starts_with("1/22/20"), names_to = "Date", values_to = "Cases")
+
+# Create the plot
+ggplot(top_10_data_long, aes(x = Date, y = Cases, color = Country.Region)) +
+  geom_line() +
+  labs(title = "COVID-19 Cases on March 1, 2020 (Top 10 Country/Regions)",
+       x = "Date",
+       y = "Total Cases") +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+```
+
+
+
+
+## Summary
+
+
+
+
+
+# Appendix
+```
+# Load the required libraries
+
+```
