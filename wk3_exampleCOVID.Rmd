@@ -1,0 +1,245 @@
+---
+title: "Early Phases of the COVID-19 Pandemic and Government Control"
+author: "N. Nicol"
+date: "2023-10-11"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+This report was produced from a John Hopkins COVID-19 Dataset and accessed via GitHub. It contains a list of countries/regions and their reported confirmed COVID-19 case numbers each day through the majority of the pandemic. 
+
+The COVID-19 dataset from which this graphic was sourced can be found here: https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv. The country freedom scales were sourced from an article "Freedom in the World index, 2020" which can be found here: https://www.axios.com/2020/03/04/world-most-least-free-countries-freedom-house
+*note: code for data manipulation can be found in the appendix
+
+```{r March, echo=FALSE}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(magrittr)
+
+# Read global COVID-19 data
+url <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+covid_data <- read_csv(url)
+
+# Select the relevant date (March 1st, 2020)
+march_1_data <- covid_data %>%
+  select(`Country/Region`, `3/15/20`)
+
+# Group by Country/Region, sum the cases, and arrange in descending order
+top_10_countries <- march_1_data %>%
+  group_by(`Country/Region`) %>%
+  summarize(cases = sum(`3/15/20`)/1000) %>%
+  arrange(desc(cases)) %>%
+  head(10)
+
+# Create a bar plot
+ggplot(top_10_countries, aes(x = reorder(`Country/Region`, -cases), y = cases)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(
+    title = "COVID-19 infections on March 15th, 2020",
+    x = "Country/Region",
+    y = "Thousands of Cases"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+```
+Active cases on March 15th demonstrate the meteoric rise of COVID-19 case numbers in China as well as its spread to frequently visited countries.
+
+```{r April, echo=FALSE}
+
+april_1_data <- covid_data %>%
+  select(`Country/Region`, `4/1/20`)
+
+# Group by Country/Region, sum the cases, and arrange in descending order
+top_10_countries_april <- april_1_data %>%
+  group_by(`Country/Region`) %>%
+  summarize(cases = sum(`4/1/20`)/1000) %>%
+  arrange(desc(cases)) %>%
+  head(10)
+
+# Create a bar plot
+ggplot(top_10_countries_april, aes(x = reorder(`Country/Region`, -cases), y = cases)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(
+    title = "COVID-19 infections on April 1st, 2020",
+    x = "Country/Region",
+    y = "Thousands of Cases"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+By April 1st, the US overtakes other countries in total numbers of cases.
+
+```{r May1, echo=FALSE}
+may_1_data <- covid_data %>%
+  select(`Country/Region`, `5/1/20`)
+
+# Group by Country/Region, sum the cases, and arrange in descending order
+top_10_countries_may <- may_1_data %>%
+  group_by(`Country/Region`) %>%
+  summarize(cases = sum(`5/1/20`)/1000) %>%
+  arrange(desc(cases)) %>%
+  head(10)
+
+# Create a bar plot
+ggplot(top_10_countries_may, aes(x = reorder(`Country/Region`, -cases), y = cases)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(
+    title = "COVID-19 infections on May 1st, 2020",
+    x = "Country/Region",
+    y = "Thousands of Cases"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+```
+On May 1st, 2020, the US clearly incubated the most cases by a significant margin that surpassed even the levels of the next three countries combined. 
+
+```{r Population_Normalized1, echo=FALSE}
+# Select the relevant date (March 1st, 2020)
+april_1_data <- covid_data %>%
+  select(`Country/Region`, `4/1/20`)
+
+# Group by Country/Region, sum the cases, and arrange in descending order
+country_cases <- april_1_data %>%
+  group_by(`Country/Region`) %>%
+  summarize(cases = sum(`4/1/20`)) %>%
+  arrange(desc(cases))
+
+# Manually specify populations for the selected countries
+populations <- c(
+  China = 1425671352,
+  Kazakhstan = 19606633,
+  Russia = 144444359,
+  `Saudi Arabia` = 36947025,
+  US = 339996563,
+  Canada = 38781291,
+  Australia = 26439111,
+  Spain = 47519628,
+  Italy = 58870762
+)
+
+# Manually specify populations for the selected countries
+populations <- c(
+  China = 1425671352,
+  Kazakhstan = 19606633,
+  Russia = 144444359,
+  `Saudi Arabia` = 36947025,
+  US = 339996563,
+  Canada = 38781291,
+  Australia = 26439111,
+  Spain = 47519628,
+  Italy = 58870762
+)
+
+# Define colors for the two groups
+colors <- c(
+  "China" = "Pink",
+  "Kazakhstan" = "Pink",
+  "Russia" = "Pink",
+  "Saudi Arabia" = "Pink",
+  "US" = "Red",
+  "Canada" = "Red",
+  "Australia" = "Red",
+  "Spain" = "Red",
+  "Italy" = "Red"
+)
+
+# Merge COVID-19 cases data with populations
+merged_data <- country_cases %>%
+  filter(`Country/Region` %in% names(populations)) %>%
+  mutate(
+    normalized_cases = cases / populations[`Country/Region`] * 1000000
+  )
+
+# Create a bar plot with pink and red colors
+ggplot(merged_data, aes(x = reorder(`Country/Region`, -normalized_cases), y = normalized_cases, fill = `Country/Region`)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(
+    values = colors,
+    breaks = c("China", "US"),
+    labels = c("Fewer freedoms", "More freedoms")
+  ) +  # Set custom fill colors and labels for the legend
+  labs(
+    title = "Normalized COVID-19 infections on April 1st, 2020",
+    x = "Country/Region",
+    y = "Cases per Million People"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+```
+
+Those countries where citizens enjoy the most freedom, as ranked by Freedom House, were also most plagued by the pandemic. This raises questions as to how much freedom should governments afford their citizens, and when are they given too much for their own good?
+
+```{r Population_Normalized4, echo=FALSE}
+# Select the relevant date (March 1st, 2020)
+May_1_data <- covid_data %>%
+  select(`Country/Region`, `5/1/20`)
+
+# Group by Country/Region, sum the cases, and arrange in descending order
+country_cases <- May_1_data %>%
+  group_by(`Country/Region`) %>%
+  summarize(cases = sum(`5/1/20`)) %>%
+  arrange(desc(cases))
+
+# Manually specify populations for the selected countries
+populations <- c(
+  China = 1425671352,
+  Kazakhstan = 19606633,
+  Russia = 144444359,
+  `Saudi Arabia` = 36947025,
+  US = 339996563,
+  Canada = 38781291,
+  Australia = 26439111,
+  Spain = 47519628,
+  Italy = 58870762
+)
+
+# Define colors for the two groups
+colors <- c(
+  "China" = "Pink",
+  "Kazakhstan" = "Pink",
+  "Russia" = "Pink",
+  "Saudi Arabia" = "Pink",
+  "US" = "Red",
+  "Canada" = "Red",
+  "Australia" = "Red",
+  "Spain" = "Red",
+  "Italy" = "Red"
+)
+
+# Merge COVID-19 cases data with populations
+merged_data <- country_cases %>%
+  filter(`Country/Region` %in% names(populations)) %>%
+  mutate(
+    normalized_cases = cases / populations[`Country/Region`] * 1000000
+  )
+
+# Create a bar plot with pink and red colors
+ggplot(merged_data, aes(x = reorder(`Country/Region`, -normalized_cases), y = normalized_cases, fill = `Country/Region`)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(
+    values = colors,
+    breaks = c("China", "US"),
+    labels = c("Fewer freedoms", "More freedoms")
+  ) +  # Set custom fill colors and labels for the legend
+  labs(
+    title = "Normalized COVID-19 infections on March 1st, 2020",
+    x = "Country/Region",
+    y = "Cases per Million People"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+```
+
+### Potential Biases
+A number of potential biases can be noted in this report. The first few graphs did not account for population size which could skew interpretations. Australia, an outlier with relatively more freedoms, had very strict lockdowns early in the pandemic that were very effective in reducing active COVID-19 cases.
+
+
+## Summary
+As you can see from this analysis, the prevalence of COVID-19 cases varied greatly and even decreased in some countries while others struggled to slow the spread. As seen in the last two graphs, those countries afforded the greatest general freedoms also tend to have the highest per-capita rates of COVID-19. A number of psychological hypotheses could be made from this observation. One, is that perhaps humans cannot be trusted to act in our best interests when there are short-term incentives to do otherwise. Another, that humans will defy government recommendations when they believe others to be doing the same. While this data alone cannot confirm any particular implication into the human psyche, it is still interesting to consider.
+
+
+
+
+# Appendix
+```
+# Load the required libraries
+
+```
